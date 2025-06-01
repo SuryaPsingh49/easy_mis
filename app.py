@@ -59,28 +59,15 @@ class CompanyData(db.Model):
             'timestamp': self.timestamp.isoformat() if self.timestamp else None
         }
 
-# IMPORTANT: Initialize database tables
-@app.before_first_request
+# Initialize database tables using app context
 def create_tables():
-    """Create database tables before the first request"""
-    try:
-        db.create_all()
-        print("Database tables created successfully!")
-    except Exception as e:
-        print(f"Error creating database tables: {e}")
-
-# Alternative approach using app context (more reliable)
-def init_db():
-    """Initialize database tables"""
+    """Create database tables"""
     try:
         with app.app_context():
             db.create_all()
-            print("Database tables initialized successfully!")
+            print("Database tables created successfully!")
     except Exception as e:
-        print(f"Error initializing database: {e}")
-
-# Call init_db immediately when module is imported
-init_db()
+        print(f"Error creating database tables: {e}")
 
 # Helper Functions
 def get_week_number(date):
@@ -280,6 +267,9 @@ def dashboard():
         return redirect(url_for('login'))
     
     try:
+        # Ensure database tables exist
+        db.create_all()
+        
         # Get summary statistics
         total_companies = CompanyData.query.count()
         companies_with_contacts = CompanyData.query.filter(CompanyData.designated_person_name != '').filter(CompanyData.designated_person_name.isnot(None)).count()
@@ -608,18 +598,18 @@ def init_database():
     
     return redirect(url_for('dashboard'))
 
+# Create tables when the app starts (for development)
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
+    create_tables()
     print("Enhanced Company Directory System starting...")
     print("Login credentials: admin / admin123")
     print("New features: Product column, Interactive dashboard with real-time filtering and search")
     app.run(debug=True)
 
 # For production deployment, ensure database is created
+# This will run when the module is imported (like in Gunicorn)
 try:
-    with app.app_context():
-        db.create_all()
-        print("Production database tables created!")
+    create_tables()
+    print("Production database tables created!")
 except Exception as e:
     print(f"Production database creation error: {e}")
