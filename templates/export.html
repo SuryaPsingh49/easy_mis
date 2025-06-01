@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Data - Company Directory</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/export.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <h1 class="nav-title">Company Directory - Export Data</h1>
+            </div>
+            <div class="nav-right">
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/data_entry" class="nav-link">Data Entry</a>
+                <a href="/logout" class="nav-link logout-btn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Export Options -->
+        <div class="export-section">
+            <div class="export-header">
+                <h2 class="section-title">Export Company Directory</h2>
+                <p class="section-subtitle">Download your company data in various formats</p>
+            </div>
+
+            <div class="export-cards">
+                <!-- Excel Export Card -->
+                <div class="export-card">
+                    <div class="card-icon excel-icon">📊</div>
+                    <div class="card-content">
+                        <h3 class="card-title">Excel Export</h3>
+                        <p class="card-description">Download as Excel spreadsheet (.xlsx) with formatting and formulas</p>
+                        
+                        <div class="export-options">
+                            <div class="option-group">
+                                <label for="excel-week" class="option-label">Filter by Week:</label>
+                                <select id="excel-week" class="option-select">
+                                    <option value="all">All Weeks</option>
+                                    {% for week in weeks %}
+                                        <option value="{{ week }}">{{ week }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button onclick="exportData('excel')" class="export-btn excel-btn">
+                            <span class="btn-icon">⬇</span>
+                            Export to Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PDF Export Card -->
+                <div class="export-card">
+                    <div class="card-icon pdf-icon">📄</div>
+                    <div class="card-content">
+                        <h3 class="card-title">PDF Report</h3>
+                        <p class="card-description">Generate professional PDF report with company summary and statistics</p>
+                        
+                        <div class="export-options">
+                            <div class="option-group">
+                                <label for="pdf-week" class="option-label">Filter by Week:</label>
+                                <select id="pdf-week" class="option-select">
+                                    <option value="all">All Weeks</option>
+                                    {% for week in weeks %}
+                                        <option value="{{ week }}">{{ week }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button onclick="exportData('pdf')" class="export-btn pdf-btn">
+                            <span class="btn-icon">📋</span>
+                            Generate PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Statistics -->
+        <div class="stats-section">
+            <h2 class="section-title">Export Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="total-companies">0</div>
+                        <div class="stat-label">Total Companies</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="total-weeks">{{ weeks|length }}</div>
+                        <div class="stat-label">Weeks Available</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="with-contacts">0</div>
+                        <div class="stat-label">With Contact Person</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="with-products">0</div>
+                        <div class="stat-label">With Products Listed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Preview -->
+        <div class="preview-section">
+            <div class="preview-header">
+                <h2 class="section-title">Export Preview</h2>
+                <div class="preview-controls">
+                    <select id="preview-week" class="preview-select" onchange="updatePreview()">
+                        <option value="all">All Weeks</option>
+                        {% for week in weeks %}
+                            <option value="{{ week }}">{{ week }}</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="updatePreview()" class="refresh-btn">Refresh Preview</button>
+                </div>
+            </div>
+            
+            <div class="preview-container">
+                <div id="loading-preview" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading preview...</p>
+                </div>
+                
+                <div id="preview-table" class="preview-table">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Company Name</th>
+                                <th>Contact</th>
+                                <th>Person</th>
+                                <th>Designation</th>
+                                <th>Product</th>
+                                <th>Address</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-tbody">
+                            <!-- Preview data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="no-preview-data" class="no-data-state" style="display: none;">
+                    <div class="no-data-icon">📭</div>
+                    <p>No data available for the selected criteria</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export History -->
+        <div class="history-section">
+            <h2 class="section-title">Recent Exports</h2>
+            <div class="history-list" id="export-history">
+                <div class="history-item">
+                    <div class="history-icon excel-icon">📊</div>
+                    <div class="history-content">
+                        <div class="history-title">Excel Export - All Weeks</div>
+                        <div class="history-date">Last exported: Never</div>
+                    </div>
+                </div>
+                
+                <div class="history-item">
+                    <div class="history-icon pdf-icon">📄</div>
+                    <div class="history-content">
+                        <div class="history-title">PDF Report - All Weeks</div>
+                        <div class="history-date">Last exported: Never</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Export functionality
+        function exportData(format) {
+            const weekSelect = document.getElementById(format + '-week');
+            const week = weekSelect.value;
+            
+            // Show loading state
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div> Exporting...';
+            
+            // Create download URL
+            const url = `/export_data?format=${format}&week=${week}`;
+            
+            // Create invisible link and trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Update export history
+            updateExportHistory(format, week);
+            
+            // Reset button after delay
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }, 2000);
+        }
+
+        // Update preview table
+        function updatePreview() {
+            const week = document.getElementById('preview-week').value;
+            const loadingDiv = document.getElementById('loading-preview');
+            const tableDiv = document.getElementById('preview-table');
+            const noDataDiv = document.getElementById('no-preview-data');
+            
+            // Show loading state
+            loadingDiv.style.display = 'block';
+            tableDiv.style.display = 'none';
+            noDataDiv.style.display = 'none';
+            
+            // Fetch data
+            fetch(`/api/dashboard_data?week=${week}`)
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.style.display = 'none';
+                    
+                    if (data.length === 0) {
+                        noDataDiv.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Update statistics
+                    updateStatistics(data);
+                    
+                    // Update table
+                    const tbody = document.getElementById('preview-tbody');
+                    tbody.innerHTML = data.slice(0, 10).map(company => `
+                        <tr>
+                            <td>${new Date(company.date).toLocaleDateString()}</td>
+                            <td>${company.company_name}</td>
+                            <td>${company.contact_number}</td>
+                            <td>${company.designated_person_name || '-'}</td>
+                            <td>${company.designation || '-'}</td>
+                            <td>${company.product || '-'}</td>
+                            <td>${company.address.length > 30 ? company.address.substring(0, 30) + '...' : company.address}</td>
+                        </tr>
+                    `).join('');
+                    
+                    if (data.length > 10) {
+                        tbody.innerHTML += `
+                            <tr class="more-row">
+                                <td colspan="7">... and ${data.length - 10} more companies</td>
+                            </tr>
+                        `;
+                    }
+                    
+                    tableDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error loading preview:', error);
+                    loadingDiv.style.display = 'none';
+                    noDataDiv.style.display = 'block';
+                });
+        }
+
+        // Update statistics
+        function updateStatistics(data) {
+            document.getElementById('total-companies').textContent = data.length;
+            
+            const withContacts = data.filter(c => c.designated_person_name && c.designated_person_name.trim()).length;
+            document.getElementById('with-contacts').textContent = withContacts;
+            
+            const withProducts = data.filter(c => c.product && c.product.trim()).length;
+            document.getElementById('with-products').textContent = withProducts;
+        }
+
+        // Update export history
+        function updateExportHistory(format, week) {
+            const now = new Date().toLocaleString();
+            const historyItems = document.querySelectorAll('.history-item');
+            
+            historyItems.forEach(item => {
+                const icon = item.querySelector('.history-icon');
+                const title = item.querySelector('.history-title');
+                const date = item.querySelector('.history-date');
+                
+                if ((format === 'excel' && icon.classList.contains('excel-icon')) ||
+                    (format === 'pdf' && icon.classList.contains('pdf-icon'))) {
+                    title.textContent = `${format.toUpperCase()} Export - ${week === 'all' ? 'All Weeks' : week}`;
+                    date.textContent = `Last exported: ${now}`;
+                }
+            });
+        }
+
+        // Sync week selectors
+        function syncWeekSelectors() {
+            const selectors = ['excel-week', 'pdf-week', 'preview-week'];
+            
+            selectors.forEach(selectorId => {
+                document.getElementById(selectorId).addEventListener('change', function() {
+                    const selectedWeek = this.value;
+                    selectors.forEach(otherId => {
+                        if (otherId !== selectorId) {
+                            document.getElementById(otherId).value = selectedWeek;
+                        }
+                    });
+                    
+                    if (selectorId === 'preview-week') {
+                        updatePreview();
+                    }
+                });
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            syncWeekSelectors();
+            updatePreview();
+        });
+    </script>
+</body>
+</html>

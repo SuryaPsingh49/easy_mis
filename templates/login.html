@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Directory - Home</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/login.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .feature-card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .text-gradient {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 min-h-screen">
+    <!-- Header -->
+    <header class="relative z-10 p-6">
+        <nav class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-building text-white text-3xl"></i>
+                <h1 class="text-2xl font-bold text-white">Company Directory</h1>
+            </div>
+            <div class="hidden md:flex space-x-6 text-white">
+                <a href="#features" class="hover:text-blue-200 transition">Features</a>
+                <a href="#analytics" class="hover:text-blue-200 transition">Analytics</a>
+                <a href="#login" class="hover:text-blue-200 transition">Login</a>
+                <a href="#contact" class="hover:text-blue-200 transition">Contact</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative py-20 px-6">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+            <!-- Hero Content -->
+            <div class="text-center lg:text-left">
+                <h1 class="text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                    Manage Your Business
+                    <span class="text-gradient block">Intelligence</span>
+                </h1>
+                <p class="text-xl text-blue-100 mb-8 leading-relaxed">
+                    Comprehensive dashboard analytics, data management, and reporting tools 
+                    for modern businesses. Track revenue, manage customers, and export insights effortlessly.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="#login" class="inline-flex items-center px-8 py-4 bg-white text-purple-600 font-semibold rounded-full hover:bg-gray-100 transition transform hover:scale-105">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Get Started
+                    </a>
+                    <a href="#features" class="inline-flex items-center px-8 py-4 glass-effect text-white font-semibold rounded-full hover:bg-white hover:bg-opacity-20 transition">
+                        <i class="fas fa-play mr-2"></i>
+                        Learn More
+                    </a>
+                </div>
+            </div>
+
+            <!-- Login Card -->
+            <div id="login" class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white border-opacity-20">
+                <div class="text-center mb-8">
+                    <i class="fas fa-user-shield text-4xl text-white mb-4"></i>
+                    <h2 class="text-2xl font-bold text-white mb-2">Admin Login</h2>
+                    <p class="text-blue-100">Access your dashboard</p>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="mb-4 p-3 rounded-lg {% if category == 'error' %}bg-red-500 bg-opacity-20 text-red-100 border border-red-300{% else %}bg-green-500 bg-opacity-20 text-green-100 border border-green-300{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" class="space-y-6">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-user mr-2"></i>Username
+                        </label>
+                        <input type="text" name="username" id="username" required
+                               class="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-blue-200"
+                               placeholder="Enter your username">
+                    </div>
+                    
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-lock mr-2"></i>Password
+                        </label>
+                        <input type="password" name="password" id="password" required
+                               class="w-full px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-blue-200"
+                               placeholder="Enter your password">
+                    </div>
+                    
+                    <button type="submit"
+                            class="w-full bg-white text-purple-600 py-3 px-6 rounded-lg font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-purple-600 transition duration-200 transform hover:scale-105">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                    </button>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <div class="bg-blue-500 bg-opacity-20 p-3 rounded-lg border border-blue-300 border-opacity-30">
+                        <p class="text-sm text-blue-100 mb-1">Default Credentials:</p>
+                        <p class="text-white font-semibold">admin / admin123</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-white mb-4">Powerful Features</h2>
+                <p class="text-xl text-blue-100">Everything you need to manage your business data efficiently</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="feature-card bg-white bg-opacity-10 p-8 rounded-2xl border border-white border-opacity-20">
+                    <i class="fas fa-chart-line text-4xl text-blue-300 mb-6"></i>
+                    <h3 class="text-xl font-bold text-white mb-4">Dashboard Analytics</h3>
+                    <ul class="text-blue-100 space-y-2">
+                        <li><strong>Summary Cards:</strong> Total entries, revenue, current week count</li>
+                        <li><strong>Weekly Trend:</strong> Line chart showing revenue over time</li>
+                        <li><strong>Region Distribution:</strong> Bar chart of customers by region</li>
+                        <li><strong>Status Breakdown:</strong> Pie chart of status distribution</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card bg-white bg-opacity-10 p-8 rounded-2xl border border-white border-opacity-20">
+                    <i class="fas fa-download text-4xl text-green-300 mb-6"></i>
+                    <h3 class="text-xl font-bold text-white mb-4">Export Features</h3>
+                    <ul class="text-blue-100 space-y-2">
+                        <li><strong>Excel Export:</strong> Download as .xlsx with all data</li>
+                        <li><strong>PDF Reports:</strong> Formatted reports with tables</li>
+                        <li><strong>Week Filtering:</strong> Export specific weeks or all data</li>
+                        <li><strong>Quick Export:</strong> One-click current week/all data exports</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card bg-white bg-opacity-10 p-8 rounded-2xl border border-white border-opacity-20">
+                    <i class="fas fa-database text-4xl text-purple-300 mb-6"></i>
+                    <h3 class="text-xl font-bold text-white mb-4">Data Management</h3>
+                    <ul class="text-blue-100 space-y-2">
+                        <li><strong>Excel Upload:</strong> Bulk import customer data</li>
+                        <li><strong>Manual Entry:</strong> Add individual records</li>
+                        <li><strong>Data Validation:</strong> Ensure data integrity</li>
+                        <li><strong>Flexible Fields:</strong> Customizable data structure</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analytics Section -->
+    <section id="analytics" class="py-20 px-6 bg-black bg-opacity-20">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-white mb-4">Excel Format & Usage</h2>
+                <p class="text-xl text-blue-100">Expected data structure and workflow</p>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12">
+                <div class="bg-white bg-opacity-10 p-8 rounded-2xl border border-white border-opacity-20">
+                    <h3 class="text-2xl font-bold text-white mb-6">📊 Expected Excel Format</h3>
+                    <div class="space-y-4 text-blue-100">
+                        <div class="flex items-center">
+                            <i class="fas fa-user text-blue-300 w-6"></i>
+                            <span><strong>Customer</strong> - Customer name</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-box text-green-300 w-6"></i>
+                            <span><strong>Product</strong> - Product name</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt text-red-300 w-6"></i>
+                            <span><strong>Region</strong> - North/South/East/West/Central</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-yellow-300 w-6"></i>
+                            <span><strong>Status</strong> - Active/Pending/Completed/Cancelled</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-dollar-sign text-purple-300 w-6"></i>
+                            <span><strong>Revenue</strong> - Numeric revenue value</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-sticky-note text-orange-300 w-6"></i>
+                            <span><strong>Notes</strong> - Additional notes (optional)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar text-pink-300 w-6"></i>
+                            <span><strong>Date</strong> - YYYY-MM-DD format (optional)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 p-8 rounded-2xl border border-white border-opacity-20">
+                    <h3 class="text-2xl font-bold text-white mb-6">📈 Usage Workflow</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-start space-x-4">
+                            <div class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">1</div>
+                            <div>
+                                <h4 class="text-white font-semibold">Login</h4>
+                                <p class="text-blue-200">Enter admin credentials</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">2</div>
+                            <div>
+                                <h4 class="text-white font-semibold">Data Entry</h4>
+                                <p class="text-blue-200">Add data manually or upload Excel</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">3</div>
+                            <div>
+                                <h4 class="text-white font-semibold">Dashboard</h4>
+                                <p class="text-blue-200">View analytics and trends</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">4</div>
+                            <div>
+                                <h4 class="text-white font-semibold">Export</h4>
+                                <p class="text-blue-200">Generate weekly/monthly reports</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security & Customization -->
+    <section class="py-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12">
+                <div class="bg-white bg-opacity-10 p-8 rounded-2xl border border-white border-opacity-20">
+                    <h3 class="text-2xl font-bold text-white mb-6">🔒 Security Notes</h3>
+                    <ul class="text-blue-100 space-y-3">
+                        <li class="flex items-center">
+                            <i class="fas fa-key text-yellow-300 mr-3"></i>
+                            Login credentials are hardcoded in app.py
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-database text-blue-300 mr-3"></i>
+                            SQLite database has no encryption
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-upload text-green-300 mr-3"></i>
+                            File uploads are stored in uploads/ folder
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-shield-alt text-red-300 mr-3"></i>
+                            Session secret key should be changed in production
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 p-8 rounded-2xl border border-white border-opacity-20">
+                    <h3 class="text-2xl font-bold text-white mb-6">🛠️ Customization</h3>
+                    <div class="space-y-4 text-blue-100">
+                        <div>
+                            <h4 class="text-white font-semibold mb-2">Adding New Fields</h4>
+                            <ul class="text-sm space-y-1 ml-4">
+                                <li>• Update WeeklyData model in app.py</li>
+                                <li>• Update HTML forms in templates</li>
+                                <li>• Update Excel parsing logic</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-2">Changing Credentials</h4>
+                            <p class="text-sm">Update ADMIN_USERNAME and ADMIN_PASSWORD in app.py</p>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-2">Adding Chart Types</h4>
+                            <p class="text-sm">Add queries, Chart.js code, and API endpoints</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Troubleshooting -->
+    <section class="py-20 px-6 bg-black bg-opacity-20">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-white mb-4">🔧 Troubleshooting</h2>
+                <p class="text-xl text-blue-100">Common issues and solutions</p>
+            </div>
+            
+            <div class="bg-white bg-opacity-10 p-8 rounded-2xl border border-white border-opacity-20">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-4">Common Issues</h3>
+                        <ul class="text-blue-100 space-y-3">
+                            <li><strong>Database not found:</strong> Run the app once to auto-create database.db</li>
+                            <li><strong>Upload folder error:</strong> App will create uploads/ folder automatically</li>
+                            <li><strong>Excel parsing error:</strong> Check column names match expected format</li>
+                            <li><strong>PDF generation error:</strong> Ensure WeasyPrint is properly installed</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-4">Dependencies</h3>
+                        <ul class="text-blue-100 space-y-2">
+                            <li>• Flask 2.3.3+</li>
+                            <li>• SQLAlchemy for database</li>
+                            <li>• Pandas for Excel processing</li>
+                            <li>• WeasyPrint for PDF generation</li>
+                            <li>• Bootstrap 5.3.0 (CDN)</li>
+                            <li>• Chart.js 3.9.1 (CDN)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 px-6">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="bg-white bg-opacity-10 p-12 rounded-2xl border border-white border-opacity-20">
+                <div class="animate-float">
+                    <i class="fas fa-robot text-6xl text-blue-300 mb-6"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Made by Surya AI</h2>
+                <div class="text-xl text-blue-100 space-y-2 mb-8">
+                    <p class="font-semibold text-2xl text-white">Surya Pratap Singh</p>
+                    <div class="flex flex-col sm:flex-row justify-center items-center gap-6 mt-6">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-phone text-green-300"></i>
+                            <span>7268902449</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-envelope text-blue-300"></i>
+                            <span>agon7268@gmail.com</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-map-marker-alt text-red-300"></i>
+                            <span>Sahibabad</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-blue-200 mb-8">Innovative solutions for modern business intelligence and data management</p>
+                <div class="flex justify-center space-x-4">
+                    <a href="mailto:agon7268@gmail.com" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full transition transform hover:scale-105">
+                        <i class="fas fa-envelope mr-2"></i>Get in Touch
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-6 border-t border-white border-opacity-20">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-blue-200">&copy; 2025 Company Directory by Surya AI. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add floating animation to feature cards
+        const featureCards = document.querySelectorAll('.feature-card');
+        featureCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.2}s`;
+        });
+    </script>
+</body>
+</html>

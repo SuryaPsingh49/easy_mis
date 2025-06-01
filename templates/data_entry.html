@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Entry - Company Directory</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/data_entry.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <h1 class="nav-title">Company Directory - Data Entry</h1>
+            </div>
+            <div class="nav-right">
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/export" class="nav-link">Export</a>
+                <a href="/logout" class="nav-link logout-btn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Data Entry Forms -->
+        <div class="entry-section">
+            <div class="form-tabs">
+                <button class="tab-btn active" onclick="showTab('manual')">Manual Entry</button>
+                <button class="tab-btn" onclick="showTab('excel')">Excel Upload</button>
+            </div>
+
+            <!-- Manual Entry Form -->
+            <div id="manual-tab" class="tab-content active">
+                <div class="form-card">
+                    <h2 class="form-title">Add Company Manually</h2>
+                    <form method="POST" class="entry-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="date" class="form-label">Date *</label>
+                                <input type="date" id="date" name="date" required class="form-input" value="{{ datetime.now().strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="company_name" class="form-label">Company Name *</label>
+                                <input type="text" id="company_name" name="company_name" required class="form-input" placeholder="Enter company name">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contact_number" class="form-label">Contact Number *</label>
+                                <input type="text" id="contact_number" name="contact_number" required class="form-input" placeholder="Enter contact number">
+                            </div>
+                            <div class="form-group">
+                                <label for="designated_person_name" class="form-label">Designated Person Name</label>
+                                <input type="text" id="designated_person_name" name="designated_person_name" class="form-input" placeholder="Enter person name">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="designation" class="form-label">Designation</label>
+                                <input type="text" id="designation" name="designation" class="form-input" placeholder="Enter designation">
+                            </div>
+                            <div class="form-group">
+                                <label for="product" class="form-label">Product/Service</label>
+                                <input type="text" id="product" name="product" class="form-input" placeholder="Enter product or service">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address" class="form-label">Address *</label>
+                            <textarea id="address" name="address" required class="form-textarea" rows="3" placeholder="Enter complete address"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="remarks" class="form-label">Remarks</label>
+                            <textarea id="remarks" name="remarks" class="form-textarea" rows="2" placeholder="Enter any additional remarks"></textarea>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Add Company</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Excel Upload Form -->
+            <div id="excel-tab" class="tab-content">
+                <div class="form-card">
+                    <h2 class="form-title">Upload Excel File</h2>
+                    <div class="upload-info">
+                        <h3>Supported Excel Columns:</h3>
+                        <ul class="column-list">
+                            <li><strong>Required:</strong> Company Name, Contact Number, Address</li>
+                            <li><strong>Optional:</strong> Designated Person Name, Designation, Product, Remarks, Date</li>
+                        </ul>
+                        <p class="upload-note">The system will automatically map similar column names (e.g., "Company" → "Company Name")</p>
+                    </div>
+                    
+                    <form method="POST" enctype="multipart/form-data" class="upload-form">
+                        <div class="file-upload">
+                            <input type="file" id="excel_file" name="excel_file" accept=".xlsx,.xls" required class="file-input">
+                            <label for="excel_file" class="file-label">
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">
+                                    <span class="upload-main">Choose Excel File</span>
+                                    <span class="upload-sub">Supports .xlsx and .xls files</span>
+                                </div>
+                            </label>
+                        </div>
+                        <button type="submit" class="submit-btn">Upload and Process</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Entries -->
+        <div class="recent-section">
+            <h2 class="section-title">Recent Entries</h2>
+            <div class="entries-grid">
+                {% if recent_entries %}
+                    {% for entry in recent_entries %}
+                    <div class="entry-card">
+                        <div class="entry-header">
+                            <h3 class="entry-company">{{ entry.company_name }}</h3>
+                            <span class="entry-date">{{ entry.date.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                        <div class="entry-details">
+                            <p class="entry-contact">📞 {{ entry.contact_number }}</p>
+                            {% if entry.designated_person_name %}
+                                <p class="entry-person">👤 {{ entry.designated_person_name }}</p>
+                            {% endif %}
+                            {% if entry.product %}
+                                <p class="entry-product">📦 {{ entry.product }}</p>
+                            {% endif %}
+                            <p class="entry-address">📍 {{ entry.address[:50] }}{% if entry.address|length > 50 %}...{% endif %}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-entries">
+                        <p>No recent entries found. Add your first company above!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // File upload preview
+        document.getElementById('excel_file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                const label = document.querySelector('.file-label .upload-main');
+                label.textContent = fileName;
+            }
+        });
+
+        // Form validation
+        document.querySelector('.entry-form').addEventListener('submit', function(e) {
+            const requiredFields = ['company_name', 'contact_number', 'address'];
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                const input = document.getElementById(field);
+                if (!input.value.trim()) {
+                    input.classList.add('error');
+                    isValid = false;
+                } else {
+                    input.classList.remove('error');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields');
+            }
+        });
+    </script>
+</body>
+</html>
