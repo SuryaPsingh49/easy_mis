@@ -59,6 +59,29 @@ class CompanyData(db.Model):
             'timestamp': self.timestamp.isoformat() if self.timestamp else None
         }
 
+# IMPORTANT: Initialize database tables
+@app.before_first_request
+def create_tables():
+    """Create database tables before the first request"""
+    try:
+        db.create_all()
+        print("Database tables created successfully!")
+    except Exception as e:
+        print(f"Error creating database tables: {e}")
+
+# Alternative approach using app context (more reliable)
+def init_db():
+    """Initialize database tables"""
+    try:
+        with app.app_context():
+            db.create_all()
+            print("Database tables initialized successfully!")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+
+# Call init_db immediately when module is imported
+init_db()
+
 # Helper Functions
 def get_week_number(date):
     """Get week number in format YYYY-W##"""
@@ -256,26 +279,44 @@ def dashboard():
     if 'logged_in' not in session:
         return redirect(url_for('login'))
     
-    # Get summary statistics
-    total_companies = CompanyData.query.count()
-    companies_with_contacts = CompanyData.query.filter(CompanyData.designated_person_name != '').filter(CompanyData.designated_person_name.isnot(None)).count()
-    companies_with_products = CompanyData.query.filter(CompanyData.product != '').filter(CompanyData.product.isnot(None)).count()
-    current_week_entries = CompanyData.query.filter_by(week=get_current_week()).count()
-    
-    # Get recent companies for table
-    recent_companies = CompanyData.query.order_by(CompanyData.timestamp.desc()).limit(10).all()
-    
-    # Get all weeks for filter
-    weeks = db.session.query(CompanyData.week).distinct().order_by(CompanyData.week.desc()).all()
-    weeks = [w[0] for w in weeks]
-    
-    return render_template('dashboard.html',
-                         total_companies=total_companies,
-                         companies_with_contacts=companies_with_contacts,
-                         companies_with_products=companies_with_products,
-                         current_week_entries=current_week_entries,
-                         recent_companies=recent_companies,
-                         weeks=weeks)
+    try:
+        # Get summary statistics
+        total_companies = CompanyData.query.count()
+        companies_with_contacts = CompanyData.query.filter(CompanyData.designated_person_name != '').filter(CompanyData.designated_person_name.isnot(None)).count()
+        companies_with_products = CompanyData.query.filter(CompanyData.product != '').filter(CompanyData.product.isnot(None)).count()
+        current_week_entries = CompanyData.query.filter_by(week=get_current_week()).count()
+        
+        # Get recent companies for table
+        recent_companies = CompanyData.query.order_by(CompanyData.timestamp.desc()).limit(10).all()
+        
+        # Get all weeks for filter
+        weeks = db.session.query(CompanyData.week).distinct().order_by(CompanyData.week.desc()).all()
+        weeks = [w[0] for w in weeks]
+        
+        return render_template('dashboard.html',
+                             total_companies=total_companies,
+                             companies_with_contacts=companies_with_contacts,
+                             companies_with_products=companies_with_products,
+                             current_week_entries=current_week_entries,
+                             recent_companies=recent_companies,
+                             weeks=weeks)
+    except Exception as e:
+        print(f"Dashboard error: {e}")
+        # Try to initialize database again
+        try:
+            db.create_all()
+            flash('Database initialized. Please refresh the page.', 'info')
+        except Exception as init_error:
+            print(f"Failed to initialize database: {init_error}")
+            flash('Database initialization failed. Please contact administrator.', 'error')
+        
+        return render_template('dashboard.html',
+                             total_companies=0,
+                             companies_with_contacts=0,
+                             companies_with_products=0,
+                             current_week_entries=0,
+                             recent_companies=[],
+                             weeks=[])
 
 @app.route('/data_entry', methods=['GET', 'POST'])
 def data_entry():
@@ -364,17 +405,24 @@ def data_entry():
         return redirect(url_for('data_entry'))
     
     # Get recent entries for display
-    recent_entries = CompanyData.query.order_by(CompanyData.timestamp.desc()).limit(10).all()
-    return render_template('data_entry.html', recent_entries=recent_entries,datetime=datetime)
+    try:
+        recent_entries = CompanyData.query.order_by(CompanyData.timestamp.desc()).limit(10).all()
+    except:
+        recent_entries = []
+    
+    return render_template('data_entry.html', recent_entries=recent_entries, datetime=datetime)
 
 @app.route('/export')
 def export():
     if 'logged_in' not in session:
         return redirect(url_for('login'))
     
-    # Get available weeks
-    weeks = db.session.query(CompanyData.week).distinct().order_by(CompanyData.week.desc()).all()
-    weeks = [w[0] for w in weeks]
+    try:
+        # Get available weeks
+        weeks = db.session.query(CompanyData.week).distinct().order_by(CompanyData.week.desc()).all()
+        weeks = [w[0] for w in weeks]
+    except:
+        weeks = []
     
     return render_template('export.html', weeks=weeks)
 
@@ -449,49 +497,53 @@ def chart_data():
     
     chart_type = request.args.get('type')
     
-    if chart_type == 'weekly_trend':
-        data = db.session.query(
-            CompanyData.week,
-            db.func.count(CompanyData.id).label('count')
-        ).group_by(CompanyData.week).order_by(CompanyData.week).all()
+    try:
+        if chart_type == 'weekly_trend':
+            data = db.session.query(
+                CompanyData.week,
+                db.func.count(CompanyData.id).label('count')
+            ).group_by(CompanyData.week).order_by(CompanyData.week).all()
+            
+            return jsonify({
+                'labels': [d.week for d in data],
+                'data': [d.count for d in data]
+            })
         
-        return jsonify({
-            'labels': [d.week for d in data],
-            'data': [d.count for d in data]
-        })
-    
-    elif chart_type == 'designation_distribution':
-        data = db.session.query(
-            CompanyData.designation,
-            db.func.count(CompanyData.id).label('count')
-        ).filter(CompanyData.designation != '').filter(CompanyData.designation.isnot(None)).group_by(CompanyData.designation).limit(10).all()
+        elif chart_type == 'designation_distribution':
+            data = db.session.query(
+                CompanyData.designation,
+                db.func.count(CompanyData.id).label('count')
+            ).filter(CompanyData.designation != '').filter(CompanyData.designation.isnot(None)).group_by(CompanyData.designation).limit(10).all()
+            
+            return jsonify({
+                'labels': [d.designation for d in data],
+                'data': [d.count for d in data]
+            })
         
-        return jsonify({
-            'labels': [d.designation for d in data],
-            'data': [d.count for d in data]
-        })
-    
-    elif chart_type == 'product_distribution':
-        data = db.session.query(
-            CompanyData.product,
-            db.func.count(CompanyData.id).label('count')
-        ).filter(CompanyData.product != '').filter(CompanyData.product.isnot(None)).group_by(CompanyData.product).limit(10).all()
+        elif chart_type == 'product_distribution':
+            data = db.session.query(
+                CompanyData.product,
+                db.func.count(CompanyData.id).label('count')
+            ).filter(CompanyData.product != '').filter(CompanyData.product.isnot(None)).group_by(CompanyData.product).limit(10).all()
+            
+            return jsonify({
+                'labels': [d.product[:20] + '...' if len(d.product) > 20 else d.product for d in data],
+                'data': [d.count for d in data]
+            })
         
-        return jsonify({
-            'labels': [d.product[:20] + '...' if len(d.product) > 20 else d.product for d in data],
-            'data': [d.count for d in data]
-        })
-    
-    elif chart_type == 'contact_status':
-        with_contact = CompanyData.query.filter(CompanyData.designated_person_name != '').filter(CompanyData.designated_person_name.isnot(None)).count()
-        without_contact = CompanyData.query.filter(
-            db.or_(CompanyData.designated_person_name == '', CompanyData.designated_person_name.is_(None))
-        ).count()
-        
-        return jsonify({
-            'labels': ['With Contact Person', 'Without Contact Person'],
-            'data': [with_contact, without_contact]
-        })
+        elif chart_type == 'contact_status':
+            with_contact = CompanyData.query.filter(CompanyData.designated_person_name != '').filter(CompanyData.designated_person_name.isnot(None)).count()
+            without_contact = CompanyData.query.filter(
+                db.or_(CompanyData.designated_person_name == '', CompanyData.designated_person_name.is_(None))
+            ).count()
+            
+            return jsonify({
+                'labels': ['With Contact Person', 'Without Contact Person'],
+                'data': [with_contact, without_contact]
+            })
+    except Exception as e:
+        print(f"Chart data error: {e}")
+        return jsonify({'error': 'Database not initialized'}), 500
     
     return jsonify({'error': 'Invalid chart type'}), 400
 
@@ -502,15 +554,19 @@ def dashboard_data():
     
     week_filter = request.args.get('week', 'all')
     
-    # Build query
-    query = CompanyData.query
-    if week_filter and week_filter != 'all':
-        query = query.filter_by(week=week_filter)
-    
-    # Get filtered data
-    companies = query.order_by(CompanyData.timestamp.desc()).limit(20).all()
-    
-    return jsonify([company.to_dict() for company in companies])
+    try:
+        # Build query
+        query = CompanyData.query
+        if week_filter and week_filter != 'all':
+            query = query.filter_by(week=week_filter)
+        
+        # Get filtered data
+        companies = query.order_by(CompanyData.timestamp.desc()).limit(20).all()
+        
+        return jsonify([company.to_dict() for company in companies])
+    except Exception as e:
+        print(f"Dashboard data error: {e}")
+        return jsonify([])
 
 @app.route('/api/search_companies')
 def search_companies():
@@ -522,16 +578,35 @@ def search_companies():
     if not search_term:
         return jsonify([])
     
-    companies = CompanyData.query.filter(
-        db.or_(
-            CompanyData.company_name.contains(search_term),
-            CompanyData.designated_person_name.contains(search_term),
-            CompanyData.contact_number.contains(search_term),
-            CompanyData.product.contains(search_term)
-        )
-    ).order_by(CompanyData.timestamp.desc()).limit(10).all()
+    try:
+        companies = CompanyData.query.filter(
+            db.or_(
+                CompanyData.company_name.contains(search_term),
+                CompanyData.designated_person_name.contains(search_term),
+                CompanyData.contact_number.contains(search_term),
+                CompanyData.product.contains(search_term)
+            )
+        ).order_by(CompanyData.timestamp.desc()).limit(10).all()
+        
+        return jsonify([company.to_dict() for company in companies])
+    except Exception as e:
+        print(f"Search error: {e}")
+        return jsonify([])
+
+# Initialize database when app starts
+@app.route('/init_db')
+def init_database():
+    """Manual database initialization endpoint"""
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
     
-    return jsonify([company.to_dict() for company in companies])
+    try:
+        db.create_all()
+        flash('Database initialized successfully!', 'success')
+    except Exception as e:
+        flash(f'Database initialization failed: {e}', 'error')
+    
+    return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
     with app.app_context():
@@ -540,3 +615,11 @@ if __name__ == '__main__':
     print("Login credentials: admin / admin123")
     print("New features: Product column, Interactive dashboard with real-time filtering and search")
     app.run(debug=True)
+
+# For production deployment, ensure database is created
+try:
+    with app.app_context():
+        db.create_all()
+        print("Production database tables created!")
+except Exception as e:
+    print(f"Production database creation error: {e}")
